@@ -1,8 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
-from ..schemas import ItemCreate, UserCreate
+from ..schemas import ItemCreate, UserCreate, UserOut
 
 router = APIRouter()        # Spring의 Controller 분리와 동일함!
+
+#--------------
+# 임시 db (메모리)
+USERS = {1: {"id": 1, "username":"test01", "password": "aaaa1111"}}
+#--------------
 
 @router.get("/type")
 def test_type(x: int):
@@ -36,7 +41,25 @@ def create_item(item: ItemCreate):
 # - 함수명 : create_user
 # - request body : {"username": "xxx", "password": "xxx"}
 # - response : {"username": "xxx", "password": "xxx"}
-
-@router.post("/users", status_code=201)
+#           => {"id":xx, "username": xxx}
+@router.post("/users", response_model=UserOut, status_code=201)
 def create_user(user: UserCreate):
+    """ 응답 데이터 필터링 (response_model) """
+    new_id = max(USERS) + 1
+    USERS[new_id] = {"id": new_id,
+                     "username": user.username,
+                     "password": user.password }
+    return USERS[new_id]
+
+# [GET] /users/{user_id}
+# - response {"id":xx, "username":"xxx"}
+# - 함수명 : get_user
+@router.get("/users/{user_id}", response_model=UserOut)
+def get_user(user_id: int):
+    """ 데이터가 없을 경우 HTTPException 으로 오류 응답 처리 """
+    user =  USERS.get(user_id)
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
     return user

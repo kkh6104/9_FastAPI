@@ -18,3 +18,8 @@ class UserCreate(BaseModel):
     """
     username: str = Field(pattern="^[a-z][a-z0-9_]{3,15}$")
     password: str = Field(pattern="^[A-Za-z0-9!@#$%^&*]{8,20}$")
+
+# {"id": xx, "username": "xxx}
+class UserOut(BaseModel):
+    id: int
+    username: str = Field(pattern="^[a-z][a-z0-9_]{3,15}$")
