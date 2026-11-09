@@ -71,6 +71,16 @@ def update_todo(id: int):
     return id
 
 # [DELETE] /todos/{id}
-@router.delete("/{id}")
-def delete_todo(id: int):
-    return id
+@router.delete("/{id}", status_code=204) # 204 : 성공 후 응답 body가 없을 때 (=> return 필요 없음)
+def delete_todo(id: int,
+                db: Session = Depends(get_db)):
+
+    todo = db.get(Todo, id)
+
+    if not todo:
+        raise HTTPException(status_code=404, detail="todo not found")
+
+    db.delete(todo)
+    db.commit()
+
+    # return id
