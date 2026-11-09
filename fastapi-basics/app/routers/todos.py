@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.schemas import TodoCreate, TodoOut
+from app.schemas import TodoCreate, TodoOut, TodoUpdate
 from app.database import get_db, Session
 from app.models import Todo
 
@@ -66,9 +66,21 @@ def create_todo(body: TodoCreate
     return todo
 
 # [PATCH]  /todos/{id}
-@router.patch("/{id}")
-def update_todo(id: int):
-    return id
+@router.patch("/{id}", response_model=TodoOut)
+def update_todo(id: int, body: TodoUpdate,
+                db: Session = Depends(get_db)):
+    todo = db.get(Todo, id)
+    if not todo:
+        raise HTTPException(status_code=404, detail="todo not found")
+
+    # body.model_dump(exclude_unset=True) : 요청 시 전달된 데이터만 dict
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(todo, key, value)
+
+    db.commit()
+    db.refresh(todo)
+    
+    return todo
 
 # [DELETE] /todos/{id}
 @router.delete("/{id}", status_code=204) # 204 : 성공 후 응답 body가 없을 때 (=> return 필요 없음)
